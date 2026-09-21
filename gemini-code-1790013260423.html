@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurador Voods - Uniformes Esportivos</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { display: flex; margin: 0; padding: 20px; background: #f4f6f8; gap: 20px; flex-wrap: wrap; }
+    #canvas-container { background: #fff; border-radius: 8px; padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .controls { background: #fff; padding: 20px; border-radius: 8px; flex: 1; min-width: 320px; max-width: 420px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    h2 { margin-top: 0; color: #111; font-size: 1.2rem; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+    .control-group { margin-bottom: 15px; }
+    label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; color: #444; }
+    input[type="color"], input[type="text"], input[type="file"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    .btn-primary { width: 100%; padding: 12px; background: #000; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    .btn-primary:hover { background: #222; }
+    .btn-danger { width: 100%; padding: 8px; background: #d9534f; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+    .btn-danger:hover { background: #c9302c; }
+  </style>
+</head>
+<body>
+
+  <div id="canvas-container">
+    <canvas id="jerseyCanvas" width="500" height="500"></canvas>
+  </div>
+
+  <div class="controls">
+    <h2>Personalizar Uniforme Voods</h2>
+
+    <div class="control-group">
+      <label for="bodyColor">Cor do Corpo:</label>
+      <input type="color" id="bodyColor" value="#ffffff">
+    </div>
+
+    <div class="control-group">
+      <label for="sleeveColor">Cor das Mangas:</label>
+      <input type="color" id="sleeveColor" value="#111111">
+    </div>
+
+    <div class="control-group">
+      <label for="collarColor">Cor da Gola e Detalhes:</label>
+      <input type="color" id="collarColor" value="#e63946">
+    </div>
+
+    <div class="control-group">
+      <label for="playerName">Nome do Jogador:</label>
+      <input type="text" id="playerName" placeholder="Ex: SILVA">
+    </div>
+
+    <div class="control-group">
+      <label for="playerNumber">Número:</label>
+      <input type="text" id="playerNumber" placeholder="Ex: 10" maxlength="3">
+    </div>
+
+    <div class="control-group">
+      <label for="logoUpload">Enviar Escudo / Logo (PNG):</label>
+      <input type="file" id="logoUpload" accept="image/*">
+    </div>
+
+    <button id="deleteSelectedBtn" class="btn-danger">Remover Imagem Selecionada</button>
+    <button id="exportBtn" class="btn-primary">Baixar Layout (PNG)</button>
+  </div>
+
+  <script>
+    const canvas = new fabric.Canvas('jerseyCanvas');
+
+    // Moldes em vetor SVG
+    const svgParts = {
+      body: 'M150,120 L350,120 L360,420 L140,420 Z',
+      leftSleeve: 'M150,120 L80,200 L120,240 L160,160 Z',
+      rightSleeve: 'M350,120 L420,200 L380,240 L340,160 Z',
+      collar: 'M200,120 L250,170 L300,120 L270,120 L250,145 L230,120 Z'
+    };
+
+    let bodyShape, leftSleeveShape, rightSleeveShape, collarShape, nameText, numberText, voodsBrand;
+
+    function initJersey() {
+      bodyShape = new fabric.Path(svgParts.body, { fill: '#ffffff', stroke: '#ccc', strokeWidth: 1, selectable: false });
+      leftSleeveShape = new fabric.Path(svgParts.leftSleeve, { fill: '#111111', selectable: false });
+      rightSleeveShape = new fabric.Path(svgParts.rightSleeve, { fill: '#350120', selectable: false });
+      collarShape = new fabric.Path(svgParts.collar, { fill: '#e63946', selectable: false });
+
+      canvas.add(bodyShape, leftSleeveShape, rightSleeveShape, collarShape);
+
+      // Marca Voods no peito direito
+      voodsBrand = new fabric.Text('VOODS', {
+        left: 310, top: 160, originX: 'center',
+        fontSize: 14, fontWeight: 'bold', fill: '#111', fontFamily: 'Arial', selectable: false
+      });
+
+      // Texto de Nome
+      nameText = new fabric.Text('', {
+        left: 250, top: 210, originX: 'center',
+        fontSize: 22, fontWeight: 'bold', fill: '#111', fontFamily: 'Impact'
+      });
+
+      // Texto de Número
+      numberText = new fabric.Text('', {
+        left: 250, top: 250, originX: 'center',
+        fontSize: 85, fontWeight: 'bold', fill: '#111', fontFamily: 'Impact'
+      });
+
+      canvas.add(voodsBrand, nameText, numberText);
+    }
+
+    initJersey();
+
+    // Troca de cores
+    document.getElementById('bodyColor').addEventListener('input', (e) => {
+      bodyShape.set('fill', e.target.value);
+      canvas.renderAll();
+    });
+
+    document.getElementById('sleeveColor').addEventListener('input', (e) => {
+      leftSleeveShape.set('fill', e.target.value);
+      rightSleeveShape.set('fill', e.target.value);
+      canvas.renderAll();
+    });
+
+    document.getElementById('collarColor').addEventListener('input', (e) => {
+      collarShape.set('fill', e.target.value);
+      canvas.renderAll();
+    });
+
+    // Atualização de textos
+    document.getElementById('playerName').addEventListener('input', (e) => {
+      nameText.set('text', e.target.value.toUpperCase());
+      canvas.renderAll();
+    });
+
+    document.getElementById('playerNumber').addEventListener('input', (e) => {
+      numberText.set('text', e.target.value);
+      canvas.renderAll();
+    });
+
+    // Upload de Escudo / Patrocínio
+    document.getElementById('logoUpload').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (f) => {
+        fabric.Image.fromURL(f.target.result, (img) => {
+          img.scaleToWidth(50);
+          img.set({
+            left: 190,
+            top: 155,
+            cornerSize: 6,
+            transparentCorners: false
+          });
+          canvas.add(img);
+          canvas.setActiveObject(img);
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Remover objeto selecionado
+    document.getElementById('deleteSelectedBtn').addEventListener('click', () => {
+      const activeObj = canvas.getActiveObject();
+      if (activeObj && activeObj !== bodyShape && activeObj !== leftSleeveShape && activeObj !== rightSleeveShape && activeObj !== collarShape) {
+        canvas.remove(activeObj);
+      }
+    });
+
+    // Exportar imagem
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const dataURL = canvas.toDataURL({ format: 'png', multiplier: 2 });
+      const link = document.createElement('a');
+      link.download = 'layout-uniforme-voods.png';
+      link.href = dataURL;
+      link.click();
+    });
+  </script>
+</body>
+</html>
